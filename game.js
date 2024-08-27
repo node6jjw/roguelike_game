@@ -13,7 +13,7 @@ class Player {
   updateStage() {
     this.stage++;
     this.maxHP = 100 + this.stage * 20;
-    this.attackdamage = 30000 + this.stage * 5;
+    this.attackdamage = 30 + this.stage * 5;
   }
   
   
