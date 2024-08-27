@@ -3,11 +3,19 @@ import readlineSync from 'readline-sync';
 
 class Player {
   constructor(stage) {
-    this.hp = 100 + stage * 10;
-    this.attackdamage = 30000 + stage * 5;
-    this.gold = 0;
+    
     this.stage = stage;
+    this.maxHP = 100 + stage*20;
+    this.hp = this.maxHP;
+    this.attackdamage = 30 + stage * 5;
+    this.gold = 0;
   }
+  updateStage() {
+    this.stage++;
+    this.maxHP = 100 + this.stage * 20;
+    this.attackdamage = 30000 + this.stage * 5;
+  }
+  
   
   getgold(){
     const gold_multi = Math.random() * (2.0 - 1.0) + 1.0;
@@ -27,6 +35,9 @@ class Player {
     const heal_multi = Math.random() * (1.5 - 0.7) + 0.7;
     const heal = Math.floor(this.stage * 50 * heal_multi);
     this.hp += heal;
+    if(this.hp>this.maxHP){
+      this.hp = this.maxHP;
+    }
     return heal;
   }
   dodge(stage) {
@@ -43,7 +54,7 @@ class Player {
 class Monster {
   constructor(stage) {
     this.hp = 100 + stage * 15;
-    this.attackdamage = 10 + stage * 5;
+    this.attackdamage = 1 + stage * 5;
   }
 
   attack(player) {
@@ -98,7 +109,13 @@ const battle = async (stage, player, monster) => {
     if (choice === '1') {
       const damageToMonster = player.attack(monster);
       logs.push(chalk.green(`플레이어가 몬스터에게 ${damageToMonster}의 피해를 입혔습니다!`));
-
+      if(damageToMonster > stage * 20)
+      {
+        const bounse_attack = player.attack(monster);
+        logs.push(chalk.green(`플레이어가 강한 피해를 입혀 추가 공격을 시도합니다.`));
+        logs.push(chalk.green(`${bounse_attack}만큼의 추가 피해를 입혔습니다..`));
+        
+      }
     } else if (choice === '2') {
       const healToPlayer = player.heal();
       logs.push(chalk.yellow(`플레이어가 회복 스킬을 사용해 ${healToPlayer}만큼 회복하였습니다!`));
@@ -126,7 +143,7 @@ const battle = async (stage, player, monster) => {
   if (monster.hp <= 0) {
     logs.push(chalk.green('몬스터를 물리쳤습니다!'));
     const healToPlayer = player.heal();
-    logs.push(chalk.green(`스테이지를 클리어해 ${healToPlayer} 만큼 회복합니다.`));
+    logs.push(chalk.green(`스테이지를 클리어했습니다. ${healToPlayer} 만큼 회복합니다.`));
     await new Promise(resolve => setTimeout(resolve, 1000));
     player.getgold();
     logs.push(chalk.green(`현재 골드 보유량: ${player.gold}`));
@@ -160,8 +177,8 @@ async function store(player) {
 }
 
 async function buyItem(player) {
-  const hpPotion = new Item('체력 포션', 100, (player) => { player.hp += 100; });
-  const adPotion = new Item('공격력 포션', 500, (player) => { player.attackdamage += 100; });
+  const hpPotion = new Item('최대 체력 100 증가 포션', 100, (player) => { player.hp += 100; });
+  const adPotion = new Item('공격력 20 증가 포션', 500, (player) => { player.attackdamage += 20; });
   const item_list = [hpPotion, adPotion];
   
   while (true) {
@@ -229,6 +246,7 @@ export async function startGame() {
     if (stage % 5 === 0) {
       await store(player);
     }
+    player.updateStage();
 
     stage++;
   }
